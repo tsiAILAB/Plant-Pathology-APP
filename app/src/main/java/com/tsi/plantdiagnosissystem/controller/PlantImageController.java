@@ -33,13 +33,20 @@ public class PlantImageController {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         bmp.compress(Bitmap.CompressFormat.JPEG, 60, bytes);
         //"/data/data/"
-        String filePath = Environment.getExternalStorageDirectory()  + File.separator + context.getPackageName() + File.separator +"IMAGES"+ File.separator + cropName;
+        String filePath = Utils.getAbsolutePath(context) + File.separator + "IMAGES" + File.separator + cropName;
         boolean isFileExist = Utils.createDirectoryIfNotExist(filePath);
-        File f = new File(filePath + File.separator + imageName + ".jpg");
-        f.createNewFile();
-        FileOutputStream fo = new FileOutputStream(f);
-        fo.write(bytes.toByteArray());
-        fo.close();
+
+        File f = null;
+        try {
+            f = Utils.getAbsoluteFile("IMAGES" + File.separator + cropName + File.separator + imageName + ".jpg", context); //new File(filePath , imageName + ".jpg");
+            f.createNewFile();
+            FileOutputStream fo = new FileOutputStream(f);
+            fo.write(bytes.toByteArray());
+            fo.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return f;
     }
 

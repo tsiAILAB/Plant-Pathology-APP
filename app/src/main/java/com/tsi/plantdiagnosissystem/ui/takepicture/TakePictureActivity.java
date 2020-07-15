@@ -217,7 +217,7 @@ public class TakePictureActivity extends AppCompatActivity {
                 imageUri = Uri.parse(imageUploadFilePath);
                 uploadImageFileName = Utils.getFileName(TakePictureActivity.this, imageUri);
 
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
@@ -292,16 +292,18 @@ public class TakePictureActivity extends AppCompatActivity {
         diagnosisResults.add(diagnosisResult);
 
         plantDiagnosis.putExtra("diagnosis_results", diagnosisResults);
+        plantDiagnosis.putExtra("response_id", "");
         startActivity(plantDiagnosis);
     }
 
     //start plant Diagnosis activity
-    private void goToPlantDiagnosis(String filename, String imageUri, ArrayList<DiagnosisResult> diagnosisResults) {
+    private void goToPlantDiagnosis(String filename, String imageUri, ArrayList<DiagnosisResult> diagnosisResults, String responseId) {
         Intent plantDiagnosis = new Intent(context, PlantDiagnosisActivity.class);
         plantDiagnosis.putExtra("file_name", filename);
         plantDiagnosis.putExtra("image_uri", imageUri);
         plantDiagnosis.putExtra("plant_name", plantImage.getPlantName());
         plantDiagnosis.putExtra("diagnosis_results", diagnosisResults);
+        plantDiagnosis.putExtra("response_id", responseId);
 
 //        plantDiagnosis.putExtra("cropName", plantImage.getPlantName());
         startActivity(plantDiagnosis);
@@ -402,7 +404,7 @@ public class TakePictureActivity extends AppCompatActivity {
         private void parseResponse(String[] responseArray, String[] cropDisease) {
             ArrayList<DiagnosisResult> diagnosisResults = new ArrayList<>();
             DiagnosisResult diagnosisResult;
-            for (int i = 0; i < responseArray.length; i++) {
+            for (int i = 0; i < responseArray.length-1; i++) {
                 diagnosisResult = new DiagnosisResult();
                 String diseaseName = cropDisease[i];
                 String diagnosisProbability = responseArray[i];
@@ -410,7 +412,8 @@ public class TakePictureActivity extends AppCompatActivity {
                 diagnosisResult.setDiagnosisProbability(diagnosisProbability);
                 diagnosisResults.add(diagnosisResult);
             }
-            goToPlantDiagnosis(uploadImageFileName, imageUploadFilePath, diagnosisResults);
+            String responseId = responseArray[responseArray.length-1];
+            goToPlantDiagnosis(uploadImageFileName, imageUploadFilePath, diagnosisResults, responseId);
         }
     }
 }

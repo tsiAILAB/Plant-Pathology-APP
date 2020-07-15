@@ -24,14 +24,24 @@ public class ImageUploadService {
         try {
             String API_URL = ApiNameController.getImageUploadApi().getApiUrl();
             final MediaType MEDIA_TYPE_JPEG = MediaType.parse("image/jpeg");
-
-            RequestBody req = new MultipartBody.Builder().setType(MultipartBody.FORM)
-                    .addFormDataPart("CROP_NAME", cropName)
-                    .addFormDataPart("SIZE", imageSize)
-                    .addFormDataPart("SIZE_UNIT", imageSizeUnit)
-                    .addFormDataPart("FORMAT", imageTypeString)
-                    .addFormDataPart("IMAGE", imageFileName, RequestBody.create(MEDIA_TYPE_JPEG, file)).build();
-
+            RequestBody req;
+            if("FEEDBACK".equalsIgnoreCase(cropName)) {
+              req = new MultipartBody.Builder().setType(MultipartBody.FORM)
+                        .addFormDataPart("USER_NAME", user.getUsername())
+                        .addFormDataPart("CROP_NAME", cropName)
+                        .addFormDataPart("SIZE", imageSize)
+                        .addFormDataPart("SIZE_UNIT", imageSizeUnit)
+                        .addFormDataPart("FORMAT", "NA")
+                        .addFormDataPart("IMAGE", "NA").build();
+            }else {
+                req = new MultipartBody.Builder().setType(MultipartBody.FORM)
+                        .addFormDataPart("USER_NAME", user.getUsername())
+                        .addFormDataPart("CROP_NAME", cropName)
+                        .addFormDataPart("SIZE", imageSize)
+                        .addFormDataPart("SIZE_UNIT", imageSizeUnit)
+                        .addFormDataPart("FORMAT", imageTypeString)
+                        .addFormDataPart("IMAGE", imageFileName, RequestBody.create(MEDIA_TYPE_JPEG, file)).build();
+            }
             Request request = new Request.Builder()
                     .url(API_URL)
                     .post(req)
@@ -40,7 +50,6 @@ public class ImageUploadService {
             OkHttpClient client = new OkHttpClient();
             Response response = client.newCall(request).execute();
 
-//            Log.d("response", "uploadImage:" + response.body().string());
 //            "Image upload successful!"
             return response.body().string();
 
@@ -48,9 +57,9 @@ public class ImageUploadService {
             //Maize: CLASSES={'CommonRust':0, 'Gray Leaf Spot':1, 'Northern Leaf Blight':2, 'Healthy':3}
             //Tomato: CLASSES={'Early Blight':0, 'Late Blight':1, 'Leaf Curl':2, 'Leaf Mold':3, 'Healthy':4}
             //Potato: CLASSES = [b'EarlyBlight', b'LateBlight', b'Healthy']
-//            return "92.07_98.07_94.07_94.07";//Maize
-//            return "92.07_98.07_00.07_94.07_.8";//Tomato
-//            return "92.07_98.07_94.07";//potato
+//            return "92.07_98.07_94.07_94.07_2";//Maize
+//            return "92.07_98.07_00.07_94.07_.8_2";//Tomato
+//            return "92.07_98.07_94.07_3";//potato
 
         } catch (UnknownHostException | UnsupportedEncodingException e) {
             Log.e(TAG, "Error: " + e.getLocalizedMessage());

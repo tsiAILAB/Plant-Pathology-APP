@@ -41,6 +41,38 @@
                 android:text="This is not a Plant!"
                 android:textColor="#6699CC"
                 android:textSize="18sp" />
+
+            <RadioGroup
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="20dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Test Result: "/>
+            <RadioButton
+                android:id="@+id/yesRadioButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="onRadioButtonClicked"
+                android:text="Yes" />
+
+            <RadioButton
+                android:id="@+id/noRadioButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="onRadioButtonClicked"
+                android:text="No" />
+
+                <Button
+                    android:id="@+id/okayButton"
+                    style="@style/Widget.AppCompat.Button.Borderless.Colored"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Ok" />
+            </RadioGroup>
+
+
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

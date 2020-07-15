@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Environment;
 
+import com.tsi.plantdiagnosissystem.controller.Utils;
 import com.tsi.plantdiagnosissystem.data.AppData;
 import com.tsi.plantdiagnosissystem.ui.login.LoginActivity;
 
@@ -64,8 +65,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     private void addDefaultCrops(SQLiteDatabase db) {
-        String imageRootPath = Environment.getExternalStorageDirectory() + File.separator + this.context.getPackageName()
-                + File.separator + "IMAGES" + File.separator;
+        String imageRootPath = Utils.getAbsolutePath(context) + File.separator + "IMAGES" + File.separator;
         //default api
         db.execSQL("insert into " + API_TABLE_NAME
                 + " (ID, " + nameColumn + " , " + urlColumn + ")" + "values(1,'" + AppData.UPLOAD_IMAGE + "','http://testurl.com') ;");

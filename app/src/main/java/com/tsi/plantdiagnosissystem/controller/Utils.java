@@ -60,7 +60,7 @@ public class Utils {
             in = assetManager.open(filename);
 //            String newFileName = "/data/data/" + context.getPackageName() + "/" + filename;
 
-            String filePath = Environment.getExternalStorageDirectory() + context.getPackageName();
+            String filePath = Environment.getExternalStorageDirectory() + File.separator + context.getPackageName();
             boolean isFileExist = Utils.createDirectoryIfNotExist(filePath);
 
             String newFileName = filePath + File.separator + filename;
@@ -306,9 +306,27 @@ public class Utils {
         context.startActivity(home);
     }
 
+    public static File getAbsoluteFile(String relativePath, Context context) {
+        if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+            return new File(context.getExternalFilesDir(null), relativePath);
+        } else {
+            return new File(context.getFilesDir(), relativePath);
+        }
+    }
+
+    public static String getAbsolutePath(Context context) {
+        if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+            return context.getExternalFilesDir(null).getAbsolutePath();
+        } else {
+            return context.getFilesDir().getAbsolutePath();
+        }
+    }
+
     public static String saveFromDrawable(Context context, int imageDrawable, String imageName) {
         try {
-            File root = new File(Environment.getExternalStorageDirectory() + File.separator + context.getPackageName(), "IMAGES");
+            File root = getAbsoluteFile("IMAGES", context);
+//                    new File(Environment.getExternalStorageDirectory() + File.separator
+//                    + context.getPackageName(), "IMAGES");
 
 
             if (!root.exists()) {
@@ -318,9 +336,9 @@ public class Utils {
             final Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), imageDrawable);
 //            int height = (bitmap.getHeight() * 512 / bitmap.getWidth());
 //            Bitmap scale = Bitmap.createScaledBitmap(bitmap, 512, height, true);
-            String imageFilePath = root + File.separator + imageName;
+            String imageFilePath = root.getPath() + File.separator + imageName;
 
-            File file = new File(imageFilePath);
+            File file = new File(root.getPath(), imageName);
             Log.e("Path", "" + file);
             file.createNewFile();
 
