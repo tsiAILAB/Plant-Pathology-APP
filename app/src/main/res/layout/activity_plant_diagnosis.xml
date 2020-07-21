@@ -20,7 +20,7 @@
             <ImageView
                 android:id="@+id/imageView"
                 android:layout_width="match_parent"
-                android:layout_height="250dp"
+                android:layout_height="200dp"
                 android:layout_marginBottom="30dp"
                 android:src="@drawable/no_image_selected"/>
 
@@ -31,7 +31,7 @@
                 android:layout_marginBottom="20dp"
                 android:text="Diagnosis Result"
                 android:textColor="#6688CC"
-                android:textSize="30sp"
+                android:textSize="18sp"
                 android:textStyle="bold"/>
 
             <TextView
@@ -40,29 +40,32 @@
                 android:layout_height="wrap_content"
                 android:text="This is not a Plant!"
                 android:textColor="#6699CC"
-                android:textSize="18sp" />
+                android:textSize="14sp"/>
 
             <RadioGroup
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginTop="20dp">
+                android:layout_marginTop="10dp">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Test Result: "/>
+                android:text="Test Result: "
+                android:textSize="14sp"/>
             <RadioButton
                 android:id="@+id/yesRadioButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:onClick="onRadioButtonClicked"
-                android:text="Yes" />
+                android:text="Yes"
+                android:textSize="14sp"/>
 
             <RadioButton
                 android:id="@+id/noRadioButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:onClick="onRadioButtonClicked"
-                android:text="No" />
+                android:text="No"
+                android:textSize="14sp" />
 
                 <Button
                     android:id="@+id/okayButton"
