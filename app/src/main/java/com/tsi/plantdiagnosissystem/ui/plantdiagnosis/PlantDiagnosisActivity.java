@@ -92,7 +92,13 @@ public class PlantDiagnosisActivity extends AppCompatActivity {
         String diagnosisResult = "";
         for (int i = 0; i < diagnosisResults.size(); i++) {
             diagnosisResult = diagnosisResult + "Disease Name: " + diagnosisResults.get(i).getDiseaseName() +
-                    "\nProbability: " + diagnosisResults.get(i).getDiagnosisProbability() + "%\n\n";
+                    "\nProbability: " + diagnosisResults.get(i).getDiagnosisProbability() + "%\n";
+
+            if(i!=diagnosisResults.size()-1){
+                diagnosisResult = diagnosisResult+"\n";
+            }
+
+
         }
 
 

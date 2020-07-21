@@ -20,15 +20,15 @@
             <ImageView
                 android:id="@+id/imageView"
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginBottom="30dp"
+                android:layout_height="170dp"
+                android:layout_marginBottom="20dp"
                 android:src="@drawable/no_image_selected"/>
 
             <TextView
-                android:id="@+id/titelTextView"
+                android:id="@+id/titleTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="10dp"
                 android:text="Diagnosis Result"
                 android:textColor="#6688CC"
                 android:textSize="18sp"
@@ -44,8 +44,7 @@
 
             <RadioGroup
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginTop="10dp">
+                android:layout_height="match_parent">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
