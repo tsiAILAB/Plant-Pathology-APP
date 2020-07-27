@@ -26,6 +26,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.tsi.blurimagedetector.ImageBlurrinessDetector;
 import com.tsi.plantdiagnosissystem.R;
 import com.tsi.plantdiagnosissystem.controller.UserController;
 import com.tsi.plantdiagnosissystem.controller.ImageUploadService;
@@ -112,6 +113,12 @@ public class TakePictureActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        ImageBlurrinessDetector.loadOpenCVLib(getApplicationContext());
+    }
+
     void takeImageFromGallery() {
         Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
         photoPickerIntent.setType("image/*");
@@ -133,8 +140,7 @@ public class TakePictureActivity extends AppCompatActivity {
                 final Uri imageUri = data.getData();
                 imageUploadFilePath = imageUri.getLastPathSegment();
                 uploadImageFileName = Utils.getFileName(TakePictureActivity.this, imageUri);
-
-
+                
                 imageTypeString = uploadImageFileName.substring(uploadImageFileName.lastIndexOf("."));
                 final InputStream imageStream = getContentResolver().openInputStream(imageUri);
 //                final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
@@ -146,10 +152,10 @@ public class TakePictureActivity extends AppCompatActivity {
                     File file = PlantImageController.saveImageExternalStorage(TakePictureActivity.this, selectedImageBitmap, plantImage.getPlantName());
                     //getFilePath
                     imageUploadFilePath = file.getAbsolutePath();
+                    uploadImageFileName = Utils.getFileName(TakePictureActivity.this, Uri.parse(imageUploadFilePath));
                 } catch (Exception e) {
                 }
 //                }
-
 
                 imageSize = String.valueOf(selectedImageBitmap.getByteCount() / 1024);
 
@@ -159,36 +165,33 @@ public class TakePictureActivity extends AppCompatActivity {
                 heightTextView.setText("Height: " + selectedImageBitmap.getHeight());
                 widthTextView.setText("Width: " + selectedImageBitmap.getWidth());
 
-
                 pictureImageView.setImageBitmap(selectedImageBitmap);
                 uploadImageButton.setVisibility(View.VISIBLE);
                 uploadImageButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        if (!imageTypeString.equalsIgnoreCase(".bmp")) {
-                            new AlertDialog.Builder(context)
-                                    .setMessage("Do you want diagnosis of this Image?")
-
-                                    // Specifying a listener allows you to take an action before dismissing the dialog.
-                                    // The dialog is automatically dismissed when a dialog button is clicked.
-                                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            //go to plantDiagnosis
-//                                            goToPlantDiagnosis(uploadImageFileName, imageUploadFilePath);
-
-                                            //upload image to the server
-                                            new UploadToServerAsyncTask().execute();
-
-                                        }
-                                    })
-
-                                    // A null listener allows the button to dismiss the dialog and take no further action.
-                                    .setNegativeButton("No", null)
-//                                .setIcon(android.R.drawable.ic_dialog_alert)
-                                    .show();
+                        boolean isBlurred = ImageBlurrinessDetector.isImageBlurred( uploadImageFileName, new File(imageUploadFilePath).getParent());
+                        boolean isTooBrightOrDark = ImageBlurrinessDetector.isImageTooBrightOrTooDark(uploadImageFileName, new File(imageUploadFilePath).getParent());
+                        if (isBlurred || isTooBrightOrDark) {
+                            Toast.makeText(context, "The image is blur. Please take another picture", Toast.LENGTH_LONG).show();
                         } else {
+                            if (!imageTypeString.equalsIgnoreCase(".bmp")) {
+                                new AlertDialog.Builder(context)
+                                        .setMessage("Do you want diagnosis of this Image?")
 
-                            Toast.makeText(TakePictureActivity.this, "Image type not supported", Toast.LENGTH_LONG).show();
+                                        // Specifying a listener allows you to take an action before dismissing the dialog.
+                                        // The dialog is automatically dismissed when a dialog button is clicked.
+                                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                //upload image to the server
+                                                new UploadToServerAsyncTask().execute();
+                                            }
+                                        })
+                                        // A null listener allows the button to dismiss the dialog and take no further action.
+                                        .setNegativeButton("No", null).show();
+                            } else {
+                                Toast.makeText(TakePictureActivity.this, "Image type not supported", Toast.LENGTH_LONG).show();
+                            }
                         }
                     }
                 });
@@ -232,45 +235,46 @@ public class TakePictureActivity extends AppCompatActivity {
             widthTextView.setText("Width: " + selectedImageBitmap.getWidth());
 
             imageDetailsLinearLayout.setVisibility(View.VISIBLE);
-
             uploadImageButton.setVisibility(View.VISIBLE);
             uploadImageButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    new AlertDialog.Builder(context)
-                            .setMessage("Do you want diagnosis of this Image?")
+                    boolean isBlurred = ImageBlurrinessDetector.isImageBlurred( uploadImageFileName, new File(imageUploadFilePath).getParent());
+                    boolean isTooBrightOrDark = ImageBlurrinessDetector.isImageTooBrightOrTooDark(uploadImageFileName, new File(imageUploadFilePath).getParent());
+                    if (isBlurred || isTooBrightOrDark) {
+                        Toast.makeText(context, "The image is blur. Please take another picture", Toast.LENGTH_LONG).show();
+                    } else {
+                        new AlertDialog.Builder(context)
+                                .setMessage("Do you want diagnosis of this Image?")
 
-                            // Specifying a listener allows you to take an action before dismissing the dialog.
-                            // The dialog is automatically dismissed when a dialog button is clicked.
-                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    //go to plantDiagnosis
+                                // Specifying a listener allows you to take an action before dismissing the dialog.
+                                // The dialog is automatically dismissed when a dialog button is clicked.
+                                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        //go to plantDiagnosis
 //                                    goToPlantDiagnosis(uploadImageFileName, imageUploadFilePath);
-
-                                    //upload image to the server
-                                    new UploadToServerAsyncTask().execute();
-                                }
-                            })
-
-                            // A null listener allows the button to dismiss the dialog and take no further action.
-                            .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    try {
-                                        PlantImageController.saveImageExternalStorage(TakePictureActivity.this, photo, plantImage.getPlantName());
-                                        Toast.makeText(context, "Image Saved!", Toast.LENGTH_LONG).show();
-                                    } catch (FileNotFoundException e) {
-                                        e.printStackTrace();
-                                        Toast.makeText(TakePictureActivity.this, "Something went wrong", Toast.LENGTH_LONG).show();
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                        Toast.makeText(TakePictureActivity.this, "Something went wrong", Toast.LENGTH_LONG).show();
-
+                                        //upload image to the server
+                                        new UploadToServerAsyncTask().execute();
                                     }
-                                }
-                            })
-                            .show();
+                                })
 
+                                // A null listener allows the button to dismiss the dialog and take no further action.
+                                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        try {
+                                            PlantImageController.saveImageExternalStorage(TakePictureActivity.this, photo, plantImage.getPlantName());
+                                            Toast.makeText(context, "Image Saved!", Toast.LENGTH_LONG).show();
+                                        } catch (FileNotFoundException e) {
+                                            e.printStackTrace();
+                                            Toast.makeText(TakePictureActivity.this, "Something went wrong", Toast.LENGTH_LONG).show();
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                            Toast.makeText(TakePictureActivity.this, "Something went wrong", Toast.LENGTH_LONG).show();
+                                        }
+                                    }
+                                }).show();
+                    }
                 }
             });
         } else {
@@ -404,7 +408,7 @@ public class TakePictureActivity extends AppCompatActivity {
         private void parseResponse(String[] responseArray, String[] cropDisease) {
             ArrayList<DiagnosisResult> diagnosisResults = new ArrayList<>();
             DiagnosisResult diagnosisResult;
-            for (int i = 0; i < responseArray.length-1; i++) {
+            for (int i = 0; i < responseArray.length - 1; i++) {
                 diagnosisResult = new DiagnosisResult();
                 String diseaseName = cropDisease[i];
                 String diagnosisProbability = responseArray[i];
@@ -412,7 +416,7 @@ public class TakePictureActivity extends AppCompatActivity {
                 diagnosisResult.setDiagnosisProbability(diagnosisProbability);
                 diagnosisResults.add(diagnosisResult);
             }
-            String responseId = responseArray[responseArray.length-1];
+            String responseId = responseArray[responseArray.length - 1];
             goToPlantDiagnosis(uploadImageFileName, imageUploadFilePath, diagnosisResults, responseId);
         }
     }

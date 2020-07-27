@@ -31,7 +31,7 @@ public class PlantImageController {
     public static File saveImageExternalStorage(Context context, Bitmap bmp, String cropName) throws IOException {
         String imageName = String.valueOf(System.currentTimeMillis());
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        bmp.compress(Bitmap.CompressFormat.JPEG, 60, bytes);
+        bmp.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
         //"/data/data/"
         String filePath = Utils.getAbsolutePath(context) + File.separator + "IMAGES" + File.separator + cropName;
         boolean isFileExist = Utils.createDirectoryIfNotExist(filePath);
