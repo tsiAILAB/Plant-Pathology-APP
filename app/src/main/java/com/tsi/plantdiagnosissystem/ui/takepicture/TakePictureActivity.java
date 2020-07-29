@@ -140,7 +140,7 @@ public class TakePictureActivity extends AppCompatActivity {
                 final Uri imageUri = data.getData();
                 imageUploadFilePath = imageUri.getLastPathSegment();
                 uploadImageFileName = Utils.getFileName(TakePictureActivity.this, imageUri);
-                
+
                 imageTypeString = uploadImageFileName.substring(uploadImageFileName.lastIndexOf("."));
                 final InputStream imageStream = getContentResolver().openInputStream(imageUri);
 //                final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
