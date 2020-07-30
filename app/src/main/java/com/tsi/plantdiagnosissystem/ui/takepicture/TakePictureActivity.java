@@ -172,8 +172,10 @@ public class TakePictureActivity extends AppCompatActivity {
                     public void onClick(View v) {
                         boolean isBlurred = ImageBlurrinessDetector.isImageBlurred( uploadImageFileName, new File(imageUploadFilePath).getParent());
                         boolean isTooBrightOrDark = ImageBlurrinessDetector.isImageTooBrightOrTooDark(uploadImageFileName, new File(imageUploadFilePath).getParent());
-                        if (isBlurred || isTooBrightOrDark) {
+                        if (isBlurred) {
                             Toast.makeText(context, "The image is blur. Please take another picture", Toast.LENGTH_LONG).show();
+                        } else if(isTooBrightOrDark){
+                            Toast.makeText(context, "The image is too bright or dark. Please take another picture", Toast.LENGTH_LONG).show();
                         } else {
                             if (!imageTypeString.equalsIgnoreCase(".bmp")) {
                                 new AlertDialog.Builder(context)
@@ -241,8 +243,10 @@ public class TakePictureActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     boolean isBlurred = ImageBlurrinessDetector.isImageBlurred( uploadImageFileName, new File(imageUploadFilePath).getParent());
                     boolean isTooBrightOrDark = ImageBlurrinessDetector.isImageTooBrightOrTooDark(uploadImageFileName, new File(imageUploadFilePath).getParent());
-                    if (isBlurred || isTooBrightOrDark) {
+                    if (isBlurred) {
                         Toast.makeText(context, "The image is blur. Please take another picture", Toast.LENGTH_LONG).show();
+                    } else if(isTooBrightOrDark){
+                        Toast.makeText(context, "The image is too bright or dark. Please take another picture", Toast.LENGTH_LONG).show();
                     } else {
                         new AlertDialog.Builder(context)
                                 .setMessage("Do you want diagnosis of this Image?")
