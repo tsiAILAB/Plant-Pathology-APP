@@ -28,6 +28,7 @@ import android.widget.Toast;
 
 import com.tsi.blurimagedetector.ImageBlurrinessDetector;
 import com.tsi.plantdiagnosissystem.R;
+import com.tsi.plantdiagnosissystem.controller.ImageGrabCutService;
 import com.tsi.plantdiagnosissystem.controller.UserController;
 import com.tsi.plantdiagnosissystem.controller.ImageUploadService;
 import com.tsi.plantdiagnosissystem.controller.PlantImageController;
@@ -170,6 +171,7 @@ public class TakePictureActivity extends AppCompatActivity {
                 uploadImageButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+
                         boolean isBlurred = ImageBlurrinessDetector.isImageBlurred( uploadImageFileName, new File(imageUploadFilePath).getParent());
                         boolean isTooBrightOrDark = ImageBlurrinessDetector.isImageTooBrightOrTooDark(uploadImageFileName, new File(imageUploadFilePath).getParent());
                         if (isBlurred) {
@@ -178,6 +180,12 @@ public class TakePictureActivity extends AppCompatActivity {
                             Toast.makeText(context, "The image is too bright or dark. Please take another picture", Toast.LENGTH_LONG).show();
                         } else {
                             if (!imageTypeString.equalsIgnoreCase(".bmp")) {
+
+                                //segmentation
+                                ImageGrabCutService.segmentation(new File(imageUploadFilePath).getParent(), uploadImageFileName);
+                                //grabCut
+                                uploadImageFileName = ImageGrabCutService.grabCutObject(new File(imageUploadFilePath).getParent(), uploadImageFileName);
+
                                 new AlertDialog.Builder(context)
                                         .setMessage("Do you want diagnosis of this Image?")
 
@@ -248,6 +256,12 @@ public class TakePictureActivity extends AppCompatActivity {
                     } else if(isTooBrightOrDark){
                         Toast.makeText(context, "The image is too bright or dark. Please take another picture", Toast.LENGTH_LONG).show();
                     } else {
+
+                        //segmentation
+                        ImageGrabCutService.segmentation(new File(imageUploadFilePath).getParent(), uploadImageFileName);
+                        //grabCut
+                        uploadImageFileName = ImageGrabCutService.grabCutObject(new File(imageUploadFilePath).getParent(), uploadImageFileName);
+
                         new AlertDialog.Builder(context)
                                 .setMessage("Do you want diagnosis of this Image?")
 
