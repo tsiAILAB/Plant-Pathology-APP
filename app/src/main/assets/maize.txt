@@ -1,0 +1,4 @@
+commonRust
+healthy
+grayLeafSpot
+northernLeafBlight

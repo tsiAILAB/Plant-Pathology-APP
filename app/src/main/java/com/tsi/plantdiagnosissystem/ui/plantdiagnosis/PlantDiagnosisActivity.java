@@ -27,6 +27,7 @@ import com.tsi.plantdiagnosissystem.R;
 import com.tsi.plantdiagnosissystem.controller.ImageUploadService;
 import com.tsi.plantdiagnosissystem.controller.UserController;
 import com.tsi.plantdiagnosissystem.controller.Utils;
+import com.tsi.plantdiagnosissystem.controller.database.databasecontroller.ResultFeedbackCtr;
 import com.tsi.plantdiagnosissystem.data.model.DiagnosisResult;
 import com.tsi.plantdiagnosissystem.data.model.User;
 import com.tsi.plantdiagnosissystem.ui.takepicture.TakePictureActivity;
@@ -110,13 +111,23 @@ public class PlantDiagnosisActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(feedBack != null){
-                    //upload image to the server
-                    new SendFeedbackAsyncTask().execute();
+                    //send feed to the server
+//                    new SendFeedbackAsyncTask().execute();
+
+                    //save feedback into local database
+                    saveFeedBackIntoDatabase(user, plantName, feedBack);
+                    goToCropSelection();
                 } else {
-                    Toast.makeText(PlantDiagnosisActivity.this, "Please select a option!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(PlantDiagnosisActivity.this, "Please select an option!", Toast.LENGTH_LONG).show();
                 }
             }
         });
+    }
+
+    //save feedback into local database
+    private void saveFeedBackIntoDatabase(User user, String plantName, String feedBack) {
+        ResultFeedbackCtr resultFeedbackCtr = new ResultFeedbackCtr();
+        resultFeedbackCtr.addResultFeedback(user, plantName, feedBack);
     }
 
     public void onRadioButtonClicked(View view) {
@@ -201,7 +212,7 @@ public class PlantDiagnosisActivity extends AppCompatActivity {
 
         protected void onPreExecute() {
             super.onPreExecute();
-            pd.setMessage("Wait image uploading!");
+            pd.setMessage("Sending Feedback");
             pd.show();
         }
 

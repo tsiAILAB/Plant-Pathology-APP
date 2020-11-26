@@ -80,10 +80,16 @@
         </LinearLayout>
         <Button
             android:id="@+id/uploadImageButton"
-            android:layout_width="30dp"
-            android:layout_height="26dp"
-            android:background="@android:drawable/ic_menu_upload"
-            android:visibility="invisible" />
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/rounded_button"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:visibility="invisible"
+            android:text="Analyze"/>
     </LinearLayout>
 
     <LinearLayout
@@ -99,6 +105,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight = "20dp"
+            android:padding="10dp"
             android:background="@drawable/rounded_button"
             android:drawableLeft="@android:drawable/ic_menu_camera"
             android:text="Camera"
@@ -111,6 +118,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="20dp"
+            android:padding="10dp"
             android:background="@drawable/rounded_button"
             android:drawableLeft="@android:drawable/ic_menu_gallery"
             android:text="Gallery"

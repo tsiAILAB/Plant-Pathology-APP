@@ -9,6 +9,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -17,6 +19,8 @@ import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,26 +32,22 @@ import android.widget.Toast;
 
 import com.tsi.blurimagedetector.ImageBlurrinessDetector;
 import com.tsi.plantdiagnosissystem.R;
-import com.tsi.plantdiagnosissystem.controller.ImageGrabCutService;
 import com.tsi.plantdiagnosissystem.controller.UserController;
 import com.tsi.plantdiagnosissystem.controller.ImageUploadService;
 import com.tsi.plantdiagnosissystem.controller.PlantImageController;
 import com.tsi.plantdiagnosissystem.controller.Utils;
+import com.tsi.plantdiagnosissystem.controller.tflite.Classifier;
 import com.tsi.plantdiagnosissystem.data.model.DiagnosisResult;
 import com.tsi.plantdiagnosissystem.data.model.PlantImage;
 import com.tsi.plantdiagnosissystem.data.model.User;
 import com.tsi.plantdiagnosissystem.ui.plantdiagnosis.PlantDiagnosisActivity;
-
-import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class TakePictureActivity extends AppCompatActivity {
     private static final int CAMERA_REQUEST = 1888;
@@ -64,6 +64,19 @@ public class TakePictureActivity extends AppCompatActivity {
     PlantImage plantImage = null;
     User user;
     Bitmap selectedImageBitmap;
+
+    private Classifier classifier;
+
+    ProgressDialog progressDialog;
+    SpannableString progressDialogText;
+    /**
+     * Input image size of the model along x axis.
+     */
+    private int imageSizeX;
+    /**
+     * Input image size of the model along y axis.
+     */
+    private int imageSizeY;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,6 +102,10 @@ public class TakePictureActivity extends AppCompatActivity {
 //        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 //        getSupportActionBar().setTitle(Html.fromHtml("<font color='#6699CC'>Take Picture</font>"));
 
+        //progressDialog text size
+        progressDialogText=  new SpannableString("Analyzing...");
+        progressDialogText.setSpan(new RelativeSizeSpan(2f), 0, progressDialogText.length(), 0);
+        progressDialogText.setSpan(new ForegroundColorSpan(Color.parseColor("#6699CC")), 0, progressDialogText.length(), 0);
 
         //read bundle
         user = UserController.getLoginInfo(this);
@@ -98,6 +115,43 @@ public class TakePictureActivity extends AppCompatActivity {
 
 //        Uri jg = Uri.parse(plantImage.getImageUrl());
 //        Picasso.with(context).load(jg).into(cropImageView);
+
+        //tfLite file name
+        String modelFilename = "";
+        String labelFilename = "";
+
+        switch (plantImage.getPlantName().toUpperCase()) {
+            case "MAIZE":
+                modelFilename = "maize.tflite";
+                labelFilename = "maize.txt";
+                break;
+            case "POTATO":
+                modelFilename = "potato.tflite";
+                labelFilename = "potato.txt";
+                break;
+            case "TOMATO":
+                modelFilename = "tomato.tflite";
+                labelFilename = "tomato.txt";
+                break;
+        }
+
+        //loadTensorFlowLiteModel
+        try {
+            classifier =
+                    recreateClassifier(
+                            modelFilename,
+                            labelFilename, 1);
+//            cropSize = 150;
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.e("tfLiteLoadingError", "Exception initializing classifier!");
+            Toast toast =
+                    Toast.makeText(
+                            getApplicationContext(), "Classifier could not be initialized", Toast.LENGTH_SHORT);
+            toast.show();
+            finish();
+        }
+
 
         galleryButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -114,10 +168,32 @@ public class TakePictureActivity extends AppCompatActivity {
         });
     }
 
+    private Classifier recreateClassifier(String modelFileName, String labelFilename, int numThreads) {
+        if (classifier != null) {
+            Log.d("", "Closing classifier.");
+            classifier.close();
+            classifier = null;
+        }
+
+        try {
+            Log.d("", "Creating classifier (model=%s, device=%s, numThreads=%d)");
+            classifier = Classifier.create(this, modelFileName, labelFilename, numThreads);
+        } catch (IOException e) {
+            Log.e("Exception", "Failed to create classifier." + e);
+        }
+
+        // Updates the input image size.
+        imageSizeX = classifier.getImageSizeX();
+        imageSizeY = classifier.getImageSizeY();
+        return classifier;
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
         ImageBlurrinessDetector.loadOpenCVLib(getApplicationContext());
+        if(progressDialog != null)
+            progressDialog.cancel();
     }
 
     void takeImageFromGallery() {
@@ -172,33 +248,41 @@ public class TakePictureActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
 
-                        boolean isBlurred = ImageBlurrinessDetector.isImageBlurred( uploadImageFileName, new File(imageUploadFilePath).getParent());
+                        boolean isBlurred = ImageBlurrinessDetector.isImageBlurred(uploadImageFileName, new File(imageUploadFilePath).getParent());
                         boolean isTooBrightOrDark = ImageBlurrinessDetector.isImageTooBrightOrTooDark(uploadImageFileName, new File(imageUploadFilePath).getParent());
                         if (isBlurred) {
                             Toast.makeText(context, "The image is blur. Please take another picture", Toast.LENGTH_LONG).show();
-                        } else if(isTooBrightOrDark){
+                        } else if (isTooBrightOrDark) {
                             Toast.makeText(context, "The image is too bright or dark. Please take another picture", Toast.LENGTH_LONG).show();
                         } else {
                             if (!imageTypeString.equalsIgnoreCase(".bmp")) {
 
                                 //segmentation
-                                ImageGrabCutService.segmentation(new File(imageUploadFilePath).getParent(), uploadImageFileName);
+//                                ImageGrabCutService.segmentation(new File(imageUploadFilePath).getParent(), uploadImageFileName);
                                 //grabCut
-                                uploadImageFileName = ImageGrabCutService.grabCutObject(new File(imageUploadFilePath).getParent(), uploadImageFileName);
+//                                uploadImageFileName = ImageGrabCutService.grabCutObject(new File(imageUploadFilePath).getParent(), uploadImageFileName);
 
-                                new AlertDialog.Builder(context)
-                                        .setMessage("Do you want diagnosis of this Image?")
+//                                new AlertDialog.Builder(context)
+//                                        .setMessage("Do you want diagnosis of this Image?")
 
                                         // Specifying a listener allows you to take an action before dismissing the dialog.
                                         // The dialog is automatically dismissed when a dialog button is clicked.
-                                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int which) {
+//                                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+//                                            public void onClick(DialogInterface dialog, int which) {
                                                 //upload image to the server
-                                                new UploadToServerAsyncTask().execute();
-                                            }
-                                        })
+//                                                new UploadToServerAsyncTask().execute();
+                                                //using TFLite model
+//                                                List<Classifier.Recognition> results = classifier.recognizeImage(BitmapFactory.decodeFile(imageUploadFilePath), 0);
+//                                                parseResult(results);
+//                                            }
+//                                        })
                                         // A null listener allows the button to dismiss the dialog and take no further action.
-                                        .setNegativeButton("No", null).show();
+//                                        .setNegativeButton("No", null).show();
+
+                                progressDialog = ProgressDialog.show(TakePictureActivity.this, "",
+                                        progressDialogText, true);
+                                List<Classifier.Recognition> results = classifier.recognizeImage(BitmapFactory.decodeFile(imageUploadFilePath), 0);
+                                parseResult(results);
                             } else {
                                 Toast.makeText(TakePictureActivity.this, "Image type not supported", Toast.LENGTH_LONG).show();
                             }
@@ -249,49 +333,56 @@ public class TakePictureActivity extends AppCompatActivity {
             uploadImageButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    boolean isBlurred = ImageBlurrinessDetector.isImageBlurred( uploadImageFileName, new File(imageUploadFilePath).getParent());
+                    boolean isBlurred = ImageBlurrinessDetector.isImageBlurred(uploadImageFileName, new File(imageUploadFilePath).getParent());
                     boolean isTooBrightOrDark = ImageBlurrinessDetector.isImageTooBrightOrTooDark(uploadImageFileName, new File(imageUploadFilePath).getParent());
                     if (isBlurred) {
                         Toast.makeText(context, "The image is blur. Please take another picture", Toast.LENGTH_LONG).show();
-                    } else if(isTooBrightOrDark){
+                    } else if (isTooBrightOrDark) {
                         Toast.makeText(context, "The image is too bright or dark. Please take another picture", Toast.LENGTH_LONG).show();
                     } else {
 
                         //segmentation
-                        ImageGrabCutService.segmentation(new File(imageUploadFilePath).getParent(), uploadImageFileName);
+//                        ImageGrabCutService.segmentation(new File(imageUploadFilePath).getParent(), uploadImageFileName);
                         //grabCut
-                        uploadImageFileName = ImageGrabCutService.grabCutObject(new File(imageUploadFilePath).getParent(), uploadImageFileName);
+//                        uploadImageFileName = ImageGrabCutService.grabCutObject(new File(imageUploadFilePath).getParent(), uploadImageFileName);
 
-                        new AlertDialog.Builder(context)
-                                .setMessage("Do you want diagnosis of this Image?")
-
-                                // Specifying a listener allows you to take an action before dismissing the dialog.
-                                // The dialog is automatically dismissed when a dialog button is clicked.
-                                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        //go to plantDiagnosis
-//                                    goToPlantDiagnosis(uploadImageFileName, imageUploadFilePath);
-                                        //upload image to the server
-                                        new UploadToServerAsyncTask().execute();
-                                    }
-                                })
-
-                                // A null listener allows the button to dismiss the dialog and take no further action.
-                                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        try {
-                                            PlantImageController.saveImageExternalStorage(TakePictureActivity.this, photo, plantImage.getPlantName());
-                                            Toast.makeText(context, "Image Saved!", Toast.LENGTH_LONG).show();
-                                        } catch (FileNotFoundException e) {
-                                            e.printStackTrace();
-                                            Toast.makeText(TakePictureActivity.this, "Something went wrong", Toast.LENGTH_LONG).show();
-                                        } catch (IOException e) {
-                                            e.printStackTrace();
-                                            Toast.makeText(TakePictureActivity.this, "Something went wrong", Toast.LENGTH_LONG).show();
-                                        }
-                                    }
-                                }).show();
+//                        new AlertDialog.Builder(context)
+//                                .setMessage("Do you want diagnosis of this Image?")
+//
+//                                // Specifying a listener allows you to take an action before dismissing the dialog.
+//                                // The dialog is automatically dismissed when a dialog button is clicked.
+//                                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+//                                    public void onClick(DialogInterface dialog, int which) {
+//                                        //go to plantDiagnosis
+////                                    goToPlantDiagnosis(uploadImageFileName, imageUploadFilePath);
+//                                        //upload image to the server
+////                                        new UploadToServerAsyncTask().execute();
+//                                        //using TFLite model
+//                                        List<Classifier.Recognition> results = classifier.recognizeImage(BitmapFactory.decodeFile(imageUploadFilePath), 0);
+//                                        parseResult(results);
+//                                    }
+//                                })
+//
+//                                // A null listener allows the button to dismiss the dialog and take no further action.
+//                                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+//                                    @Override
+//                                    public void onClick(DialogInterface dialog, int which) {
+//                                        try {
+//                                            PlantImageController.saveImageExternalStorage(TakePictureActivity.this, photo, plantImage.getPlantName());
+//                                            Toast.makeText(context, "Image Saved!", Toast.LENGTH_LONG).show();
+//                                        } catch (FileNotFoundException e) {
+//                                            e.printStackTrace();
+//                                            Toast.makeText(TakePictureActivity.this, "Something went wrong", Toast.LENGTH_LONG).show();
+//                                        } catch (IOException e) {
+//                                            e.printStackTrace();
+//                                            Toast.makeText(TakePictureActivity.this, "Something went wrong", Toast.LENGTH_LONG).show();
+//                                        }
+//                                    }
+//                                }).show();
+                        progressDialog = ProgressDialog.show(TakePictureActivity.this, "",
+                                progressDialogText, true);
+                        List<Classifier.Recognition> results = classifier.recognizeImage(BitmapFactory.decodeFile(imageUploadFilePath), 0);
+                        parseResult(results);
                     }
                 }
             });
@@ -300,6 +391,26 @@ public class TakePictureActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Prepare Diagnosis Result with Disease name
+     *
+     * @param results
+     */
+    private void parseResult(List<Classifier.Recognition> results) {
+        ArrayList<DiagnosisResult> diagnosisResults = new ArrayList<>();
+        DiagnosisResult diagnosisResult;
+        for (int i = 0; i < results.size(); i++) {
+            diagnosisResult = new DiagnosisResult();
+            String diseaseName = results.get(i).getTitle();
+            String diagnosisProbability = results.get(i).getConfidence().toString();
+            diagnosisResult.setDiseaseName(diseaseName);
+            diagnosisResult.setDiagnosisProbability(diagnosisProbability);
+            diagnosisResults.add(diagnosisResult);
+        }
+        String responseId = "";
+//        progressDialog.cancel();
+        goToPlantDiagnosis(uploadImageFileName, imageUploadFilePath, diagnosisResults, responseId);
+    }
     //start plant Diagnosis activity
     private void goToPlantDiagnosis(String filename, String imageUri) {
         Intent plantDiagnosis = new Intent(context, PlantDiagnosisActivity.class);

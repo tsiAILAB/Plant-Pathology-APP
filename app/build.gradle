@@ -5,7 +5,7 @@ android {
     compileSdkVersion 29
     buildToolsVersion "29.0.2"
 
-    useLibrary  'org.apache.http.legacy'
+    useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
         applicationId "com.tsi.plantdiagnosissystem"
@@ -24,6 +24,29 @@ android {
         }
     }
 
+    aaptOptions {
+        noCompress 'tflite'
+        noCompress 'lite'
+        noCompress 'txt'
+    }
+    compileOptions {
+        sourceCompatibility = '1.8'
+        targetCompatibility = '1.8'
+    }
+    lintOptions {
+        abortOnError false
+    }
+    flavorDimensions "tfliteInference"
+    productFlavors {
+        // The TFLite inference is built using the TFLite Support library.
+        support {
+            dimension "tfliteInference"
+        }
+        // The TFLite inference is built using the TFLite Task library.
+        taskApi {
+            dimension "tfliteInference"
+        }
+    }
 }
 
 dependencies {
@@ -51,5 +74,10 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.5.2'
     implementation files('libs\\BlurImageDetector-release.aar')
     implementation files('libs\\openCVLibrary343-release.aar')
+
+    // Build off of nightly TensorFlow Lite
+    implementation('org.tensorflow:tensorflow-lite:0.0.0-nightly') { changing = true }
+    implementation('org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly') { changing = true }
+    implementation('org.tensorflow:tensorflow-lite-support:0.0.0-nightly') { changing = true }
 
 }
